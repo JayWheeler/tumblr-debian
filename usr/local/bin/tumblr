@@ -1,0 +1,236 @@
+#!/bin/bash
+# =========================================================================
+# =========================================================================
+#
+#	tumblr
+#     Download image archive(s) from the famous tumblr.com website
+#
+# =========================================================================
+#
+# @author Jay Wheeler.
+# @version 0.0.7
+# @copyright © 2016, 2018. EarthWalk Software.
+# @license Licensed under the Academic Free License version 3.0
+# @package tumblr
+# @subpackage Dockerfile
+#
+# =========================================================================
+#
+#	Copyright © 2016, 2018. EarthWalk Software
+#	Licensed under the Academic Free License, version 3.0.
+#
+#	Refer to the file named License.txt provided with the source,
+#	or from
+#
+#		http://opensource.org/licenses/academic.php
+#
+# =========================================================================
+# =========================================================================
+
+declare -a tumblr_sites=()
+declare    tumblr_filename
+
+# =========================================================================
+#
+#   lmsconDisplay
+#		display message on the console
+#
+#	parameters:
+#		message = message to display
+#       override = 1 to override lmsopt
+#	returns:
+#		0 = no errors
+#		non-zero = error code
+#
+# =========================================================================
+function lmsconDisplay()
+{
+    local lmscon_buffer="${1}"
+
+    local override=${2:-0}
+    local noret=${3:-""}
+
+    [[ ${LMSOPT_QUIET} -ne 0  &&  ${override} -eq 0 ]] && return 0
+    [[ -z "${noret}" ]] && echo "${lmscon_buffer}" || echo -n "${lmscon_buffer}"
+
+    return 0
+}
+
+# =========================================================================
+#
+#	wgetSite
+#     Entry:
+#       wsite = name of the tumblr site
+#       sec = "s" for secure, otherwise empty
+#     Exit:
+#       0 = no error
+#       non-zero = result code
+#
+# =========================================================================
+function wgetSite()
+{
+    local wsite=${1}
+    local sec=${2:-""}
+
+	#
+	# Download the images using wget
+	#
+	#	-H == Enable spanning across hosts in recursion
+	#	-D == Domain list to be followed
+	#
+	#	-A == Accept list of file patterns to accept
+	#	-R == Reject list of file name patterns to regject
+	#
+	#	-r == Recursive retrieval
+	#	-l == (--level) Recursion maximum depth level (default = 5)
+	#
+	#	-nd == no hierarchy of directories
+	#	-nc == no clobber 
+	#
+	#	--random-wait == wait random seconds between requests
+	#	--limit-rate = limit download speed (e.g. --limit-rate=100k)
+	#
+	#	-e == execute command (see .wgetrc commands)
+	#
+    wget --quiet -H -Dmedia.tumblr.com,${wsite}.tumblr.com \
+         -r -R "*avatar*" \
+         -A "[0-9]" -A "*index*" -A jpeg,jpg,bmp,gif,png,avi,flv,mkv \
+	     -A "*.mp?" -A "*.wm?" \
+         --level=10 -nd -nc -erobots=off \
+	     --random-wait --limit-rate=200k \
+         http${sec}://${wsite}.tumblr.com/
+
+    return $?
+}
+
+# =========================================================================
+#
+#	downloadSite
+#     Entry:
+#       site = name of the tumblr site
+#     Exit:
+#       0 = no error
+#       non-zero = result code
+#
+# =========================================================================
+function downloadSite()
+{
+    local dsite=${1}
+
+    if [ ! -d "${dsite}" ] 
+    then
+        mkdir -p ${dsite}
+    fi
+
+    cd $dsite
+
+    lmsconDisplay "    ${dsite} " 0 "n"
+
+    wgetSite ${dsite}
+    [[ $? -eq 0 ]] ||
+     {
+        wgetSite ${dsite} "s"
+        [[ $? -eq 0 ]] || lmsconDisplay "... unable to read site ${dsite}" 0 "n"
+
+     }
+
+    lmsconDisplay "" 0
+
+	rm -f 1 2 3 4 5 6 7 8 9 index.html
+	
+    cd ../
+    return 0
+}
+
+# =========================================================================
+#
+#	processRequest
+#     Entry:
+#       none
+#     Exit:
+#       0 = no error
+#       non-zero = result code
+#
+# =========================================================================
+function processRequest()
+{
+    local tumblr_build
+    local tumblr_catalog
+    local tumblr_site
+
+    [[ ${#tumblr_sites[@]} -eq 0 ]] && 
+     {
+        [[ -n "${TUMBLR_CAT}" ]] ||
+         {
+            lmsconDisplay "Nothing to do!" 1
+            return 1
+         }
+
+        tumblr_sites=( ${TUMBLR_CAT} )
+     }
+
+    clear
+
+    cat /etc/BUILDS/tumblr | while read tumblr_build
+    do
+        lmsconDisplay "${0} : ${tumblr_build}"
+        lmsconDisplay ""
+        break
+    done
+
+    tumblr_catalog=${tumblr_sites[0]}
+
+    if [ -f "/tumblr-lists/${tumblr_catalog}" ]
+    then
+        lmsconDisplay "Catalog: ${tumblr_catalog}" 0
+
+        if [ ! -d /tumblr-target/${tumblr_catalog} ]
+        then
+            mkdir /tumblr-target/${tumblr_catalog}
+        fi
+
+	    cd /tumblr-target/${tumblr_catalog}
+
+        cat /tumblr-lists/${tumblr_catalog} | while read tumblr_site
+        do
+            [[ -z "${tumblr_site}"  ||  ${tumblr_site} == \#* ]] && continue
+            downloadSite $tumblr_site
+        done
+    else
+        tumblr_site="${tumblr_catalog}"
+        [[ -z "${tumblr_site}"  ||  ${tumblr_site} == \#* ]] && 
+         {
+            lmsconDisplay "Nothing to do!" 1
+            return 2
+         }
+
+	    cd /tumblr-target
+
+        lmsconDisplay "Single Tumblr site: ${tumblr_site}"
+        downloadSite $tumblr_site
+    fi
+
+    cd ../
+    return 0
+}
+
+# =========================================================================
+# =========================================================================
+#
+#     Application Starts Here
+#
+# =========================================================================
+# =========================================================================
+
+tumblr_sites=()
+
+for tumblr_filename in "$@"
+do
+    tumblr_sites=( "${tumblr_sites[@]}" "$tumblr_filename" )
+done
+
+processRequest
+
+# =========================================================================
+
+exit $?
