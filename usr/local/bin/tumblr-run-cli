@@ -1,0 +1,36 @@
+#!/bin/bash
+# =========================================================================
+# =========================================================================
+#
+#	tumblr-run-cli
+#     sample docker run command for tumblr from command-line-input (cli).
+#
+# =========================================================================
+#
+# @author Jay Wheeler.
+# @version 0.0.7
+# @copyright © 2017, 2018. EarthWalk Software.
+# @license Licensed under the Academic Free License version 3.0
+# @package tumblr
+# @subpackage tumblr-run-cli
+#
+# =========================================================================
+#
+#	Copyright © 2017, 2018. EarthWalk Software
+#	Licensed under the Academic Free License, version 3.0.
+#
+#	Refer to the file named License.txt provided with the source,
+#	or from
+#
+#		http://opensource.org/licenses/academic.php
+#
+# =========================================================================
+# =========================================================================
+
+docker run --rm \
+           -it \
+           -v /etc/localtime:/etc/localtime:ro \
+           -v ${HOME}/tumblr/lists:/tumblr-lists \
+           -v ${HOME}/tumblr/new:/tumblr-target \
+           --name=tumblr-cli \
+       jaywheeler/tumblr:latest tumblr clipart
