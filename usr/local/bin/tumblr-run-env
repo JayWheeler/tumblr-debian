@@ -1,0 +1,37 @@
+#!/bin/bash
+# =========================================================================
+# =========================================================================
+#
+#	tumblr-run-env
+#     sample docker run command for tumblr from docker environment variable.
+#
+# =========================================================================
+#
+# @author Jay Wheeler.
+# @version 0.0.7
+# @copyright © 2017, 2018. EarthWalk Software.
+# @license Licensed under the Academic Free License version 3.0
+# @package tumblr
+# @subpackage tumblr-run-env
+#
+# =========================================================================
+#
+#	Copyright © 2017, 2018. EarthWalk Software
+#	Licensed under the Academic Free License, version 3.0.
+#
+#	Refer to the file named License.txt provided with the source,
+#	or from
+#
+#		http://opensource.org/licenses/academic.php
+#
+# =========================================================================
+# =========================================================================
+
+docker run --rm \
+           -it \
+           -v /etc/localtime:/etc/localtime:ro \
+           -v /media/tumblr/lists:/tumblr-lists \
+           -v /media/tumblr/new:/tumblr-target \
+           --name=tumblr \
+           -e TUMBLR_CAT=posterframe \
+       jaywheeler:tumblr:latest
