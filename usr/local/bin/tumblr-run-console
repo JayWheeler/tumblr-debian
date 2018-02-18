@@ -1,0 +1,36 @@
+#!/bin/bash
+# =========================================================================
+# =========================================================================
+#
+#	tumblr-run-console
+#     sample docker run command for tumblr from an interactive shell script.
+#
+# =========================================================================
+#
+# @author Jay Wheeler.
+# @version 0.0.7
+# @copyright © 2017, 2018. EarthWalk Software.
+# @license Licensed under the Academic Free License version 3.0
+# @package tumblr
+# @subpackage tumblr-run-console
+#
+# =========================================================================
+#
+#	Copyright © 2017, 2018. EarthWalk Software
+#	Licensed under the Academic Free License, version 3.0.
+#
+#	Refer to the file named License.txt provided with the source,
+#	or from
+#
+#		http://opensource.org/licenses/academic.php
+#
+# =========================================================================
+# =========================================================================
+
+docker run --rm \
+           -it \
+           -v /etc/localtime:/etc/localtime:ro \
+           -v /media/tumblr/lists:/tumblr-lists \
+           -v /media/tumblr/new:/tumblr-target \
+           --name=tumblr \
+       jaywheeler/tumblr:latest /bin/bash
